@@ -39,8 +39,9 @@ int gear = 3;
 int speed = 0;
 
 // VARIABLES PARA LA RESORTERA
-#define SLINGSHOT_RELOAD 'Q'
-#define SLINGSHOT_RELEASE 'W'
+#define SLINGSHOT_RELOAD 'Q'   // 'R': reloading
+#define SLINGSHOT_RELEASE 'W'  // 'W': released,
+#define SLINGSHOT_SECURE 'E'   // 'E': secured
 #define SLINGSHOT_DEVICE 8
 
 void setup() {
@@ -148,10 +149,9 @@ void processCommand(int input) {
       gearDown();
       break;
     case SLINGSHOT_RELOAD:
-      slingshotReload();
-      break;
     case SLINGSHOT_RELEASE:
-      slingshotRelease();
+    case SLINGSHOT_SECURE:
+      slingshotState(input);
       break;
   }
 }
@@ -226,14 +226,8 @@ void gearDown() {
 }
 
 /* =========================== SLINGSHOT FUNCTIONS =========================== */
-void slingshotReload() {
+void slingshotState(char input) {
   Wire.beginTransmission(SLINGSHOT_DEVICE);  // transmit to device #8
-  Wire.write(SLINGSHOT_RELOAD);              // sends the given value
-  Wire.endTransmission();
-}
-
-void slingshotRelease() {
-  Wire.beginTransmission(SLINGSHOT_DEVICE);  // transmit to device #8
-  Wire.write(SLINGSHOT_RELEASE);             // sends the given value
+  Wire.write(input);                         // sends the given value
   Wire.endTransmission();
 }
