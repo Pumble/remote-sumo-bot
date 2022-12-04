@@ -1,5 +1,13 @@
-// INCLUDES AGREGAODS
+/*
+ * REFERENCES
+ * DC motor: https://www.tutorialspoint.com/arduino/arduino_dc_motor.htm
+ * Arduino Nano i2c: https://docs.arduino.cc/tutorials/nano-every/i2c
+ * Duemilanove Docs: https://docs.arduino.cc/retired/boards/arduino-duemilanove
+ */
+
+// INCLUDES AGREGADOS
 #include <SoftwareSerial.h>
+#include <Wire.h>
 
 // VARIABLES PARA EL SETUP DEL Bluetooth
 char BT_NAME[21] = "hentaiGratis";  // Nombre de 20 caracteres maximo+
@@ -30,9 +38,18 @@ SoftwareSerial bt(BT_TX_PIN, BT_RX_PIN);  //Crea conexion al bluetooth - PIN 1 a
 int gear = 3;
 int speed = 0;
 
+// VARIABLES PARA LA RESORTERA
+#define SLINGSHOT_RELOAD 'Q'
+#define SLINGSHOT_RELEASE 'W'
+#define SLINGSHOT_DEVICE 8
+
 void setup() {
+  Serial.begin(9600);
+  pinMode(LED, OUTPUT);
+
   bluetoothSetup();
   motorsSetup();
+  slingshotSetup();
 }
 
 void loop() {
@@ -55,9 +72,6 @@ void toogleLight(int times) {
 
 /* =========================== SETUP FUNCTIONS =========================== */
 void bluetoothSetup() {
-  pinMode(LED, OUTPUT);
-
-  Serial.begin(9600);
   bt.begin(BT_BPS);  // inicialmente la comunicacion serial a 9600 Baudios (velocidad de fabrica) MEJOR NO CAMBIAR
 
   bt.print("AT");  // Inicializa comando AT
@@ -80,8 +94,8 @@ void bluetoothSetup() {
 
   bt.flush();
 
-  Serial.print("Bluetooth started at ");
-  Serial.print(BT_BPS);
+  Serial.print("Bluetooth setup completed: ");
+  Serial.println(BT_BPS);
 }
 
 void motorsSetup() {
@@ -92,6 +106,15 @@ void motorsSetup() {
 
   pinMode(MOTOR_RIGHT_SPEED_PIN, OUTPUT);
   pinMode(MOTOR_RIGHT_DIRECTION_PIN, OUTPUT);
+
+  Serial.println("Motor setup completed");
+}
+
+void slingshotSetup() {
+  while (!Serial) {}
+  Wire.begin();
+
+  Serial.println("Slingshot setup completed");
 }
 
 /* =========================== BLUETOOTH FUNCTIONS =========================== */
@@ -123,6 +146,12 @@ void processCommand(int input) {
       break;
     case GEAR_DOWN:
       gearDown();
+      break;
+    case SLINGSHOT_RELOAD:
+      slingshotReload();
+      break;
+    case SLINGSHOT_RELEASE:
+      slingshotRelease();
       break;
   }
 }
@@ -174,7 +203,6 @@ void rotateRight() {
   digitalWrite(MOTOR_LEFT_DIRECTION_PIN, HIGH);
 }
 
-
 void gearUp() {
   if (gear >= 5) {
     gear = 5;
@@ -195,4 +223,17 @@ void gearDown() {
   speed = gear * SPEED_MULTIPLIER;
   Serial.print("Currrent gear: ");
   Serial.println(gear);
+}
+
+/* =========================== SLINGSHOT FUNCTIONS =========================== */
+void slingshotReload() {
+  Wire.beginTransmission(SLINGSHOT_DEVICE);  // transmit to device #8
+  Wire.write(SLINGSHOT_RELOAD);              // sends the given value
+  Wire.endTransmission();
+}
+
+void slingshotRelease() {
+  Wire.beginTransmission(SLINGSHOT_DEVICE);  // transmit to device #8
+  Wire.write(SLINGSHOT_RELEASE);             // sends the given value
+  Wire.endTransmission();
 }
