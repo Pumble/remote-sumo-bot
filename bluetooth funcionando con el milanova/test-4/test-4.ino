@@ -3,6 +3,7 @@
  * DC motor: https://www.tutorialspoint.com/arduino/arduino_dc_motor.htm
  * Arduino Nano i2c: https://docs.arduino.cc/tutorials/nano-every/i2c
  * Duemilanove Docs: https://docs.arduino.cc/retired/boards/arduino-duemilanove
+ * Puente H(L9110 / HG7881): https://electropeak.com/learn/interfacing-l9110s-dual-channel-h-bridge-motor-driver-module-with-arduino/
  */
 
 // INCLUDES AGREGADOS
@@ -36,10 +37,14 @@ SoftwareSerial bt(BT_TX_PIN, BT_RX_PIN);  //Crea conexion al bluetooth - PIN 1 a
 #define MOTOR_RIGHT_DIRECTION_PIN 11
 #define SPEED_MULTIPLIER 51
 int gear = 3;
-int speed = 0;
+#define SPEED 255
+#define MOTOR_FRONT_LEFT_SPEED_PIN 4
+#define MOTOR_FRONT_LEFT_DIRECTION_PIN 7
+#define MOTOR_FRONT_RIGHT_SPEED_PIN 8
+#define MOTOR_FRONT_RIGHT_DIRECTION_PIN 9
 
 // VARIABLES PARA LA RESORTERA
-#define SLINGSHOT_RELOAD 'Q'   // 'R': reloading
+#define SLINGSHOT_RELOAD 'Q'   // 'Q': reloading
 #define SLINGSHOT_RELEASE 'W'  // 'W': released,
 #define SLINGSHOT_SECURE 'E'   // 'E': secured
 #define SLINGSHOT_DEVICE 8
@@ -100,13 +105,30 @@ void bluetoothSetup() {
 }
 
 void motorsSetup() {
-  speed = gear * SPEED_MULTIPLIER;
+  // speed = gear * SPEED_MULTIPLIER;
 
+  // Llantas traseras
   pinMode(MOTOR_LEFT_SPEED_PIN, OUTPUT);
   pinMode(MOTOR_LEFT_DIRECTION_PIN, OUTPUT);
 
   pinMode(MOTOR_RIGHT_SPEED_PIN, OUTPUT);
   pinMode(MOTOR_RIGHT_DIRECTION_PIN, OUTPUT);
+
+  // Llantas delanteras
+  pinMode(MOTOR_FRONT_LEFT_SPEED_PIN, OUTPUT);
+  pinMode(MOTOR_FRONT_LEFT_DIRECTION_PIN, OUTPUT);
+
+  pinMode(MOTOR_FRONT_RIGHT_SPEED_PIN, OUTPUT);
+  pinMode(MOTOR_FRONT_RIGHT_DIRECTION_PIN, OUTPUT);
+
+  digitalWrite(MOTOR_LEFT_SPEED_PIN, LOW);
+  digitalWrite(MOTOR_LEFT_DIRECTION_PIN, LOW);
+  digitalWrite(MOTOR_RIGHT_SPEED_PIN, LOW);
+  digitalWrite(MOTOR_RIGHT_DIRECTION_PIN, LOW);
+  digitalWrite(MOTOR_FRONT_LEFT_SPEED_PIN, LOW);
+  digitalWrite(MOTOR_FRONT_LEFT_DIRECTION_PIN, LOW);
+  digitalWrite(MOTOR_FRONT_RIGHT_SPEED_PIN, LOW);
+  digitalWrite(MOTOR_FRONT_RIGHT_DIRECTION_PIN, LOW);
 
   Serial.println("Motor setup completed");
 }
@@ -158,49 +180,73 @@ void processCommand(int input) {
 
 /* =========================== MOTOR FUNCTIONS =========================== */
 void stopMotors() {
+  // Traseras
   digitalWrite(MOTOR_LEFT_SPEED_PIN, LOW);
   digitalWrite(MOTOR_LEFT_DIRECTION_PIN, LOW);
-
   digitalWrite(MOTOR_RIGHT_SPEED_PIN, LOW);
   digitalWrite(MOTOR_RIGHT_DIRECTION_PIN, LOW);
+
+  // Delanteras
+  digitalWrite(MOTOR_FRONT_LEFT_SPEED_PIN, LOW);
+  digitalWrite(MOTOR_FRONT_LEFT_DIRECTION_PIN, LOW);
+  digitalWrite(MOTOR_FRONT_RIGHT_SPEED_PIN, LOW);
+  digitalWrite(MOTOR_FRONT_RIGHT_DIRECTION_PIN, LOW);
 }
 
 void moveForward() {
-  Serial.print("Speed: ");
-  Serial.println(speed);
-
-  analogWrite(MOTOR_LEFT_SPEED_PIN, speed);
+  // Traseras
+  analogWrite(MOTOR_LEFT_SPEED_PIN, SPEED);
   digitalWrite(MOTOR_LEFT_DIRECTION_PIN, HIGH);
-
-  analogWrite(MOTOR_RIGHT_SPEED_PIN, speed);
+  analogWrite(MOTOR_RIGHT_SPEED_PIN, SPEED);
   digitalWrite(MOTOR_RIGHT_DIRECTION_PIN, HIGH);
+
+  // Delanteras
+  analogWrite(MOTOR_FRONT_LEFT_SPEED_PIN, SPEED);
+  digitalWrite(MOTOR_FRONT_LEFT_DIRECTION_PIN, LOW);
+  analogWrite(MOTOR_FRONT_RIGHT_SPEED_PIN, SPEED);
+  digitalWrite(MOTOR_FRONT_RIGHT_DIRECTION_PIN, LOW);
 }
 
 void moveBackward() {
-  Serial.print("Speed: ");
-  Serial.println(speed);
-
-  analogWrite(MOTOR_LEFT_SPEED_PIN, speed);
+  // Traseras
+  analogWrite(MOTOR_LEFT_SPEED_PIN, SPEED);
   digitalWrite(MOTOR_LEFT_DIRECTION_PIN, LOW);
-
-  analogWrite(MOTOR_RIGHT_SPEED_PIN, speed);
+  analogWrite(MOTOR_RIGHT_SPEED_PIN, SPEED);
   digitalWrite(MOTOR_RIGHT_DIRECTION_PIN, LOW);
+
+  // Delantera
+  analogWrite(MOTOR_FRONT_LEFT_SPEED_PIN, LOW);
+  digitalWrite(MOTOR_FRONT_LEFT_DIRECTION_PIN, SPEED);
+  analogWrite(MOTOR_FRONT_RIGHT_SPEED_PIN, LOW);
+  digitalWrite(MOTOR_FRONT_RIGHT_DIRECTION_PIN, SPEED);
 }
 
 void rotateLeft() {
-  analogWrite(MOTOR_LEFT_SPEED_PIN, speed);
+  // Traseras
+  analogWrite(MOTOR_LEFT_SPEED_PIN, SPEED);
   digitalWrite(MOTOR_LEFT_DIRECTION_PIN, LOW);
-
-  analogWrite(MOTOR_RIGHT_SPEED_PIN, speed);
+  analogWrite(MOTOR_RIGHT_SPEED_PIN, SPEED);
   digitalWrite(MOTOR_RIGHT_DIRECTION_PIN, HIGH);
+
+  // Delanteras
+  analogWrite(MOTOR_FRONT_LEFT_SPEED_PIN, LOW);
+  digitalWrite(MOTOR_FRONT_LEFT_DIRECTION_PIN, SPEED);
+  analogWrite(MOTOR_FRONT_RIGHT_SPEED_PIN, SPEED);
+  digitalWrite(MOTOR_FRONT_RIGHT_DIRECTION_PIN, LOW);
 }
 
 void rotateRight() {
-  analogWrite(MOTOR_RIGHT_SPEED_PIN, speed);
+  // Traseras
+  analogWrite(MOTOR_LEFT_SPEED_PIN, SPEED);
+  digitalWrite(MOTOR_LEFT_DIRECTION_PIN, HIGH);
+  analogWrite(MOTOR_RIGHT_SPEED_PIN, SPEED);
   digitalWrite(MOTOR_RIGHT_DIRECTION_PIN, LOW);
 
-  analogWrite(MOTOR_LEFT_SPEED_PIN, speed);
-  digitalWrite(MOTOR_LEFT_DIRECTION_PIN, HIGH);
+  // Delanteras
+  analogWrite(MOTOR_FRONT_LEFT_SPEED_PIN, SPEED);
+  digitalWrite(MOTOR_FRONT_LEFT_DIRECTION_PIN, LOW);
+  analogWrite(MOTOR_FRONT_RIGHT_SPEED_PIN, LOW);
+  digitalWrite(MOTOR_FRONT_RIGHT_DIRECTION_PIN, SPEED);
 }
 
 void gearUp() {
@@ -209,9 +255,9 @@ void gearUp() {
   } else {
     gear++;
   }
-  speed = gear * SPEED_MULTIPLIER;
-  Serial.print("Currrent gear: ");
-  Serial.println(gear);
+  // speed = gear * SPEED_MULTIPLIER;
+  // Serial.print("Currrent gear: ");
+  // Serial.println(gear);
 }
 
 void gearDown() {
@@ -220,9 +266,9 @@ void gearDown() {
   } else {
     gear--;
   }
-  speed = gear * SPEED_MULTIPLIER;
-  Serial.print("Currrent gear: ");
-  Serial.println(gear);
+  // speed = gear * SPEED_MULTIPLIER;
+  // Serial.print("Currrent gear: ");
+  // Serial.println(gear);
 }
 
 /* =========================== SLINGSHOT FUNCTIONS =========================== */
